@@ -67,7 +67,7 @@ class FoodRequest extends FormRequest
         }
         
         return [
-            'page' => intval($this->query('pageNumber', 1)),
+            'pageNumber' => intval($this->query('pageNumber', 1)),
             'pageSize' => intval($this->query('pageSize', 10)),
             'sortBy' => [
                 'field' => $sortField,
