@@ -12,12 +12,6 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     public $timestamps = false;
-    /**
-     * Indicates if the IDs are auto-incrementing.
-     *
-     * @var bool
-     */
-    public $incrementing = false;
 
     /**
      * The table associated with the model.
@@ -68,4 +62,14 @@ class User extends Authenticatable
         'created_time' => 'datetime',
         'modified_time' => 'datetime',
     ];
+
+    public function favorite_food()
+    {
+        return $this->hasMany(FavoriteFood::class);
+    }
+
+    public function cart()
+    {
+        return $this->hasMany(Cart::class, 'cart_id', 'cart_id');
+    }
 }

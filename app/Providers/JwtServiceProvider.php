@@ -40,6 +40,6 @@ class JwtServiceProvider extends ServiceProvider
      */
     public static function verifyToken(string $token)
     {
-        return JWT::decode($token, new Key(env('JWT_SECRET'), 'HS256'));
+        return (array) JWT::decode($token, new Key(env('JWT_SECRET'), 'HS256'));
     }
 }

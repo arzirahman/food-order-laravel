@@ -20,7 +20,7 @@ class Authenticate extends Middleware
 
         try {
             $user = JwtServiceProvider::verifyToken($token);
-            $request->merge(['user' => ((array) $user)]);
+            $request->merge(['user' => $user]);
         } catch (Exception $e) {
             return MessageResource::error(403, 'Request Failed', null);
         }
