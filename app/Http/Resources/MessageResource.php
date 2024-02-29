@@ -7,24 +7,29 @@ use Illuminate\Http\Response;
 
 class MessageResource
 {
-    public static function error(int $code, string $message, $errors): HttpResponseException
+    public static function error(int $code, string $message, $errors = null): HttpResponseException
     {
-        throw new HttpResponseException(response([
+        $body = [
             "statusCode" => $code,
             "message" => $message,
             "status" => self::getStatus($code),
-            "errors" => $errors
-        ], $code));
+        ];
+        if ($errors) {
+            $body["errors"] = $errors;
+        }
+        throw new HttpResponseException(response($body, $code));
     }
 
-    public static function success(int $code, string $message, $data): Response
+    public static function success(int $code, string $message, $data, $total = null): Response
     {
-        return response([
-            "statusCode" => $code,
-            "message" => $message,
-            "status" => self::getStatus($code),
-            "data" => $data
-        ], $code);
+        if ($total) {
+            $body["total"] = $total;
+        }
+        $body["statusCode"] = $code;
+        $body["message"] = $message;
+        $body["status"] = self::getStatus($code);
+        $body["data"] = $data;
+        return response($body, $code);
     }
 
     public static function getStatus(int $code)

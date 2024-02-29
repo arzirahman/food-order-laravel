@@ -15,14 +15,14 @@ class Authenticate extends Middleware
         $token = $request->bearerToken();
 
         if (!$token) {
-            return MessageResource::error(401, 'Request Failed', null);
+            return MessageResource::error(401, 'Request Failed');
         }
 
         try {
             $user = JwtServiceProvider::verifyToken($token);
             $request->merge(['user' => $user]);
         } catch (Exception $e) {
-            return MessageResource::error(403, 'Request Failed', null);
+            return MessageResource::error(403, 'Request Failed');
         }
 
         return $next($request);

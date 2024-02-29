@@ -10,6 +10,7 @@ use App\Providers\JwtServiceProvider;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
@@ -27,9 +28,7 @@ class UserController extends Controller
         $credentials = $request->validated();
         if(!Auth::attempt($credentials))
         {
-            MessageResource::error(400, "Sign In Failed", [
-                "message" => ["Wrong username or password"]
-            ]);
+            throw ValidationException::withMessages(['user' => 'Wrong username or password']);
         }
         $user = Auth::user();
         return MessageResource::success(200, "Sign In Successful", [

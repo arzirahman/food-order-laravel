@@ -39,14 +39,14 @@ class Handler extends ExceptionHandler
         }
 
         if ($exception instanceof ValidationException) {
-            return MessageResource::error(400, 'Validation Failed', $exception->getMessage());
+            return MessageResource::error(400, $exception->getMessage());
         }
 
         if ($exception instanceof NotFoundHttpException) {
-            return MessageResource::error(404, 'Request Failed', $exception->getMessage());
+            return MessageResource::error(404, $exception->getMessage());
         }
 
-        return MessageResource::error(500, 'Request Failed', $exception->getMessage());
+        return MessageResource::error(500, $exception->getMessage());
     }
 
 }

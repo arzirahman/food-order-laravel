@@ -38,11 +38,11 @@ class FoodRequest extends FormRequest
     {
         $filterData = [];
 
-        if (!is_null($this->query('foodName'))) {
+        if ($this->query('foodName')) {
             $filterData['foodName'] = $this->query('foodName');
         }
     
-        if (!is_null($this->query('categoryId'))) {
+        if ($this->query('categoryId')) {
             $filterData['categoryId'] = intval($this->query('categoryId'));
         }
     

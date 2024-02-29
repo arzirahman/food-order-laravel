@@ -23,4 +23,6 @@ Route::prefix('user-management/users')->group(function () {
 Route::middleware('auth')->prefix('/food-order')->group(function(){
     Route::get("foods", [FoodController::class, 'index']);
     Route::put("foods/{foodId}/favorites", [FoodController::class, 'toggleFavorite']);
+    Route::post("cart", [FoodController::class, 'addCart']);
+    Route::delete("cart/{foodId}", [FoodController::class, 'removeCart']);
 });

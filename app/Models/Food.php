@@ -55,7 +55,7 @@ class Food extends Model
 
     public function favorite_food()
     {
-        return $this->hasMany(FavoriteFood::class);
+        return $this->hasMany(FavoriteFood::class, 'food_id', 'food_id');
     }
 
     public function cart()

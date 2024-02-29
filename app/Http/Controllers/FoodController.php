@@ -2,25 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CartRequest;
 use App\Http\Requests\FoodRequest;
 use App\Http\Requests\ToggleFavoriteRequest;
 use App\Http\Resources\MessageResource;
+use App\Models\Cart;
 use App\Models\FavoriteFood;
 use App\Models\Food;
 use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 
 class FoodController extends Controller
 {
-    private function getData($user, $filterData, $paginationData)
+    private function getData($user, $filterData, $paginationData = null)
     {
         $query = Food::query();
-        $query->with(['category', 'cart' => function ($query) use ($user) {
-            $query->where('user_id', $user['user_id']);
-        }]);
-        $query->leftJoin('favorite_foods', function ($join) use ($user) {
-            $join->on('foods.food_id', '=', 'favorite_foods.food_id')
-                ->where('favorite_foods.user_id', '=', $user['user_id']);
-        });
+        $query->with(['category', 
+            'favorite_food' => function ($query) use ($user) {
+                $query->where('user_id', $user['user_id']);
+            }, 
+            'cart' => function ($query) use ($user) {
+                $query->where('user_id', $user['user_id']);
+            }
+        ]);
 
         if (isset($filterData['foodId'])) {
             $query->where('foods.food_id', $filterData['foodId']);
@@ -44,8 +48,10 @@ class FoodController extends Controller
         } else {
             $foods = $query->paginate(10, ['*'], 'page', 1);
         }
-        
-         /** @var \Illuminate\Pagination\LengthAwarePaginator $foods */
+
+        $totalData = $foods->total();
+
+        /** @var \Illuminate\Pagination\LengthAwarePaginator $foods */
         $transformedFoods = $foods->map(function ($food) {
             return [
                 'food_id' => $food->food_id,
@@ -56,12 +62,24 @@ class FoodController extends Controller
                     'category_id' => $food->category->category_id,
                     'category_name' => $food->category->category_name,
                 ],
-                'is_favorite' => $food->is_favorite ?? false,
+                'is_favorite' => count($food->favorite_food) > 0 && $food->favorite_food->first()['is_favorite'] ? true : false,
                 'is_cart' => count($food->cart) > 0 ? true : false
             ];
         });
 
-        return $transformedFoods;
+        return [
+            'total' => $totalData,
+            'data' => $transformedFoods
+        ];
+    }
+
+    private function checkFood(int $foodId)
+    {
+        $food = Food::find($foodId);
+        if (!$food) {
+            throw ValidationException::withMessages(['food_id' => 'Food not found']);
+        }
+        return $food;
     }
 
     public function index(FoodRequest $request): Response
@@ -72,16 +90,12 @@ class FoodController extends Controller
 
         $foods = $this->getData($user, $filterData, $paginationData);
 
-        return MessageResource::success(200, "Request Food List Success", $foods);
+        return MessageResource::success(200, "Request Food List Success", $foods['data'], $foods['total']);
     }
 
     public function toggleFavorite(ToggleFavoriteRequest $request, $foodId): Response
     {
-        $food = Food::find($foodId);
-        if (!$food) {
-            return MessageResource::success(400, "Food Id not found", null);
-        }
-
+        $food = $this->checkFood($foodId);
         $user = $request->user;
 
         $existingFavorite = FavoriteFood::where('food_id', $foodId)
@@ -101,8 +115,32 @@ class FoodController extends Controller
             $message = "$food->food_name added to favorites";
         }
 
-        $food = $this->getData($user, ["foodId" => $foodId], null)->first();
+        return MessageResource::success(200, $message, null);
+    }
 
-        return MessageResource::success(200, $message, $food);
+    public function addCart(CartRequest $request) : Response
+    {
+        $foodId = $request->validated()['food_id'];
+        $food = $this->checkFood($foodId);
+        $user = $request->user;
+        $cart = Cart::where('food_id', $foodId)->where('user_id', $user['user_id'])->first();
+        if (!$cart)
+        {
+            Cart::create([
+                'food_id' => $foodId,
+                'user_id' => $user['user_id']
+            ]);
+        }
+        $foods = $this->getData($user, ['foodId' => $foodId]);
+        return MessageResource::success(200, "$food->food_name Added to Cart", $foods['data']->first(), $foods['total']);
+    }
+
+    public function removeCart(ToggleFavoriteRequest $request, $foodId) : Response
+    {
+        $food = $this->checkFood($foodId);
+        $user = $request->user;
+        Cart::where('user_id', $user['user_id'])->where('food_id', $food->food_id)->delete();
+        $foods = $this->getData($user, ['foodId' => $food->food_id]);
+        return MessageResource::success(200, "$food->food_name removed from Cart", $foods['data']->first(), $foods['total']);
     }
 }
