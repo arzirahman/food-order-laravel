@@ -10,6 +10,7 @@ use App\Models\Cart;
 use App\Models\FavoriteFood;
 use App\Models\Food;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class FoodController extends Controller
@@ -103,11 +104,15 @@ class FoodController extends Controller
             ->first();
 
         if ($existingFavorite) {
-            $existingFavorite->is_favorite = !$existingFavorite->is_favorite;
-            $existingFavorite->save();
-            $message = $food->food_name . ($existingFavorite->is_favorite ? " added to " : " removed from ") . "favorites";
+            FavoriteFood::where('food_id', $foodId)
+                ->where('user_id', $user['user_id'])
+                ->update([
+                    'is_favorite' => !$existingFavorite->is_favorite
+                ]);
+            
+            $message = $food->food_name . (!$existingFavorite->is_favorite ? " added to " : " removed from ") . "favorites";
         } else {
-            FavoriteFood::create([
+            FavoriteFood::insert([
                 'food_id' => $foodId,
                 'user_id' => $user['user_id'],
                 'is_favorite' => true

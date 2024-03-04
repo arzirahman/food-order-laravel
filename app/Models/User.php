@@ -65,11 +65,11 @@ class User extends Authenticatable
 
     public function favorite_food()
     {
-        return $this->hasMany(FavoriteFood::class);
+        return $this->hasMany(FavoriteFood::class, 'user_id', 'user_id');
     }
 
     public function cart()
     {
-        return $this->hasMany(Cart::class, 'cart_id', 'cart_id');
+        return $this->hasMany(Cart::class, 'user_id', 'user_id');
     }
 }
